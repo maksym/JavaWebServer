@@ -4,9 +4,11 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
+import java.util.*;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -47,6 +49,14 @@ public class JavaWebServer {
             for (String l : request) {
                 System.out.println(l);
             }
+            System.out.println("--- Client request ---");
+            Map<String, String> envMap = System.getenv();
+            SortedMap<String, String> sortedEnvMap = new TreeMap<String, String>(envMap);
+            Set<String> keySet = sortedEnvMap.keySet();
+            for (String key : keySet) {
+                String value = envMap.get(key);
+                System.out.println("[" + key + "] " + value);
+            }
             out = new PrintWriter(s.getOutputStream(), true);
             out.println("HTTP/1.0 200");
             out.println("Content-type: text/html");
@@ -71,6 +81,23 @@ public class JavaWebServer {
                     "<h2>Request</h2><blockquote>";
             for (String l : request) {
                 response += "<p>" + l + "</p>";
+            }
+            response += "</blockquote><h2>Environment</h2><blockquote>";
+            for (String key : keySet) {
+                String value = envMap.get(key);
+                response += "<p>[" + key + "] " + value + "</p>";
+            }
+            response += "</blockquote><h2>Network</h2><blockquote>";
+            Enumeration e = NetworkInterface.getNetworkInterfaces();
+            while(e.hasMoreElements())
+            {
+                NetworkInterface n = (NetworkInterface) e.nextElement();
+                Enumeration ee = n.getInetAddresses();
+                while (ee.hasMoreElements())
+                {
+                    InetAddress i = (InetAddress) ee.nextElement();
+                    response += "<p>" + i.getHostAddress() + "</p>";
+                }
             }
             response += "</blockquote></div></html>";
             out.println("Content-length: " + response.length());
